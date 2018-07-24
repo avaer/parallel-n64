@@ -25,6 +25,7 @@
 #include <stdint.h>
 
 #include "fb.h"
+#include "osal/preproc.h"
 
 #ifndef DPC_REG
 #define DPC_REG(a)   ((a & 0xffff) >> 2)
@@ -37,21 +38,29 @@
 struct r4300_core;
 struct rsp_core;
 struct ri_controller;
+struct mi_controller;
 
 enum
 {
-   /* DPC status - read */
-   DPC_STATUS_XBUS_DMEM_DMA = 0x001,
-   DPC_STATUS_FREEZE        = 0x002,
-   DPC_STATUS_FLUSH         = 0x004,
-   DPC_STATUS_CBUF_READY    = 0x080,
-   /* DPC status - write */
-   DPC_STATUS_CLR_XBUS_DMEM_DMA = 0x001,
-   DPC_STATUS_SET_XBUS_DMEM_DMA = 0x002,
-   DPC_STATUS_CLR_FREEZE        = 0x004,
-   DPC_STATUS_SET_FREEZE        = 0x008,
-   DPC_STATUS_CLR_FLUSH         = 0x010,
-   DPC_STATUS_SET_FLUSH         = 0x020,
+    /* DPC status - read */
+    DPC_STATUS_XBUS_DMEM_DMA = 0x001,
+    DPC_STATUS_FREEZE        = 0x002,
+    DPC_STATUS_FLUSH         = 0x004,
+    DPC_STATUS_START_GCLK    = 0x008,
+    DPC_STATUS_CBUF_READY    = 0x080,
+    DPC_STATUS_END_VALID     = 0x200,
+    DPC_STATUS_START_VALID   = 0x400,
+    /* DPC status - write */
+    DPC_CLR_XBUS_DMEM_DMA        = 0x001,
+    DPC_SET_XBUS_DMEM_DMA        = 0x002,
+    DPC_CLR_FREEZE               = 0x004,
+    DPC_SET_FREEZE               = 0x008,
+    DPC_CLR_FLUSH                = 0x010,
+    DPC_SET_FLUSH                = 0x020,
+    DPC_CLR_TMEM_CTR             = 0x040,
+    DPC_CLR_PIPE_CTR             = 0x080,
+    DPC_CLR_CMD_CTR              = 0x100,
+    DPC_CLR_CLOCK_CTR            = 0x200
 };
 
 enum dpc_registers
@@ -76,11 +85,17 @@ enum dps_registers
     DPS_REGS_COUNT
 };
 
+enum
+{
+    DELAY_DP_INT = 0x001,
+    DELAY_UPDATESCREEN = 0x002
+};
 
 struct rdp_core
 {
     uint32_t dpc_regs[DPC_REGS_COUNT];
     uint32_t dps_regs[DPS_REGS_COUNT];
+    unsigned char do_on_unfreeze;
 
     struct fb fb;
 
@@ -88,6 +103,16 @@ struct rdp_core
     struct rsp_core* sp;
     struct ri_controller* ri;
 };
+
+static uint32_t dpc_reg(uint32_t address)
+{
+    return (address & 0xffff) >> 2;
+}
+
+static uint32_t dps_reg(uint32_t address)
+{
+    return (address & 0xffff) >> 2;
+}
 
 void init_rdp(struct rdp_core* dp,
                  struct r4300_core* r4300,
