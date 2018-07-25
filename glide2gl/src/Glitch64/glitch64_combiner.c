@@ -394,7 +394,7 @@ SHADER_VARYING
 "    gl_Position.xyz /= 125.0;                                                \n"
 "    gl_Position.y += 1.0;                                                    \n"
 "    gl_Position.z *= 1.5;                                                    \n"
-"    gl_Position.z += 1.0;                                                    \n"
+// "    gl_Position.z += 1.0;                                                    \n"
 "    gl_Position = uProjectionMatrix * uModelViewMatrix * gl_Position;        \n"
 "  }                                                                          \n"
 "  vFrontColor = aColor.bgra;                                             \n"
