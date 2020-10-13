@@ -2115,6 +2115,10 @@ int retro_stop_stepping(void)
 #endif
 }
 
+void retro_set_stop_stepping(bool newOne) {
+  stop_stepping = newOne;
+}
+
 int retro_return(bool just_flipping)
 {
    if (stop)
