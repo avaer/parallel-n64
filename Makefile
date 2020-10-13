@@ -190,7 +190,7 @@ ifneq (,$(findstring unix,$(platform)))
       WITH_DYNAREC=arm
       ASFLAGS += -D__ARM_NEON__ -marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
       CPUFLAGS += -DNO_ASM -DARM -D__arm__ -DARM_ASM -D__NEON_OPT -DNOSSE -DARM_FIX -DCLASSIC
-      CPUFLAGS += -Ofast \
+      CPUFLAGS += -O3 \
       -flto=4 -fwhole-program -fuse-linker-plugin \
       -fdata-sections -ffunction-sections -Wl,--gc-sections \
       -fno-stack-protector -fno-ident -fomit-frame-pointer \
@@ -216,7 +216,7 @@ ifneq (,$(findstring unix,$(platform)))
       WITH_DYNAREC=arm
       ASFLAGS += -D__ARM_NEON__ -marm -mtune=cortex-a35 -mfpu=neon-fp-armv8 -mfloat-abi=hard
       CPUFLAGS += -DNO_ASM -DARM -D__arm__ -DARM_ASM -D__NEON_OPT -DNOSSE -DARM_FIX -DCLASSIC
-      CPUFLAGS += -Ofast \
+      CPUFLAGS += -O3 \
       -flto -fwhole-program -fuse-linker-plugin \
       -fdata-sections -ffunction-sections -Wl,--gc-sections \
       -fno-stack-protector -fno-ident -fomit-frame-pointer \
@@ -832,7 +832,7 @@ else
 ifneq (,$(findstring msvc,$(platform)))
    CPUOPTS += -O2
 else
-	CPUOPTS += -Ofast
+	CPUOPTS += -O3
 endif
    CPUOPTS += -DNDEBUG
 ifneq ($(findstring Darwin,$(UNAME)),)
