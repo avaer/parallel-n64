@@ -318,7 +318,7 @@ m64p_error main_init(void)
    size_t i;
    unsigned int disable_extra_mem;
    /* take the r4300 emulator mode from the config file at this point and cache it in a global variable */
-   unsigned int emumode = ConfigGetParamInt(g_CoreConfig, "R4300Emulator");
+   unsigned int emumode = 0; // ConfigGetParamInt(g_CoreConfig, "R4300Emulator");
 
    /* set some other core parameters based on the config file values */
    no_compiled_jump = ConfigGetParamBool(g_CoreConfig, "NoCompiledJump");

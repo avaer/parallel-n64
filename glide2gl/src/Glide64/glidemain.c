@@ -680,6 +680,7 @@ void glide_set_filtering(unsigned value)
 	}
 }
 
+void retro_set_stop_stepping(bool newOne);
 void newSwapBuffers(void)
 {
    if (!rdp.updatescreen)
@@ -697,6 +698,7 @@ void newSwapBuffers(void)
 
    {
       grBufferSwap (settings.vsync);
+      retro_set_stop_stepping(false);
 
       if  (settings.buff_clear || (settings.hacks & hack_PPL && settings.ucode == 6))
       {

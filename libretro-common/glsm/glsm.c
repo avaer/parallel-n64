@@ -638,7 +638,7 @@ void rglBlendFunc(GLenum sfactor, GLenum dfactor)
  * Core in:
  * OpenGL    : 1.4
  */
-void rglBlendFuncSeparate(GLenum sfactor, GLenum dfactor)
+void rglBlendFuncSeparate(GLenum sfactor, GLenum dfactor, GLenum srcAlpha, GLenum dstAlpha)
 {
 #ifdef GLSM_DEBUG
    log_cb(RETRO_LOG_INFO, "glBlendFuncSeparate.\n");

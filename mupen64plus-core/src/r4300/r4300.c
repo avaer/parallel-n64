@@ -158,7 +158,7 @@ void r4300_execute(void)
         free_blocks();
     }
 
-    DebugMessage(M64MSG_INFO, "R4300 emulator finished.");
+    // DebugMessage(M64MSG_INFO, "R4300 emulator finished.");
 }
 
 int retro_stop_stepping(void);
