@@ -413,6 +413,9 @@ else ifeq ($(platform), emscripten)
    PLATFORM_EXT := unix
    STATIC_LINKING = 1
    SOURCES_C += $(CORE_DIR)/src/r4300/empty_dynarec.c
+   LDFLAGS += $(PTHREAD_FLAGS) -s USE_WEBGL2=1
+   CFLAGS += -DHAVE_OPENGLES=1 -DHAVE_OPENGLES2=1 -DHAVE_OPENGLES3=1 -DUSE_WEBGL2=1
+   CXXFLAGS += -DHAVE_OPENGLES=1 -DHAVE_OPENGLES2=1 -DHAVE_OPENGLES3=1 -DUSE_WEBGL2=1
 
 # PlayStation Vita
 else ifneq (,$(findstring vita,$(platform)))

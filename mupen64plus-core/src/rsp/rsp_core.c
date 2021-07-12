@@ -102,12 +102,7 @@ static void update_sp_status(struct rsp_core* sp, uint32_t w)
 
     /* clear / set signal 0 */
     if (w & 0x200) sp->regs[SP_STATUS_REG] &= ~SP_STATUS_SIG0;
-    if (w & 0x400)
-    {
-         sp->regs[SP_STATUS_REG] |= SP_STATUS_SIG0;
-         if (sp->audio_signal)
-             signal_rcp_interrupt(sp->r4300, MI_INTR_SP);
-     }
+    if (w & 0x400) sp->regs[SP_STATUS_REG] |= SP_STATUS_SIG0;
 
     /* clear / set signal 1 */
     if (w & 0x800) sp->regs[SP_STATUS_REG] &= ~SP_STATUS_SIG1;
@@ -273,47 +268,52 @@ void do_SP_Task(struct rsp_core* sp)
 {
     uint32_t save_pc = sp->regs2[SP_PC_REG] & ~0xfff;
 
+    uint32_t sp_delay_time;
+
     if (sp->mem[0xfc0/4] == 1)
     {
-	if (ROM_PARAMS.special_rom != PERFECT_DARK)
-	{
-	   /* Display list */
-	   /* don't do the task now
-	    * the task will be done when
-	    * DP is unfreezed (see update_dpc_status) */
-	   if (sp->dp->dpc_regs[DPC_STATUS_REG] & DPC_STATUS_FREEZE) /* DP frozen (DK64, BC) */
-	      return;
-	}
-
         unprotect_framebuffers(sp->dp);
 
+        //gfx.processDList();
         sp->regs2[SP_PC_REG] &= 0xfff;
+#if defined(PROFILE)
         timed_section_start(TIMED_SECTION_GFX);
+#endif
         rsp.doRspCycles(0xffffffff);
+#if defined(PROFILE)
         timed_section_end(TIMED_SECTION_GFX);
+#endif
         sp->regs2[SP_PC_REG] |= save_pc;
         new_frame();
 
         if (sp->r4300->mi.regs[MI_INTR_REG] & MI_INTR_DP)
-	{
-	    cp0_update_count();
-            add_interrupt_event(DP_INT, 4000);
-	    sp->r4300->mi.regs[MI_INTR_REG] &= ~MI_INTR_DP;
-	}
+        {
+            sp->r4300->mi.regs[MI_INTR_REG] &= ~MI_INTR_DP;
+            if (sp->dp->dpc_regs[DPC_STATUS_REG] & DPC_STATUS_FREEZE) {
+                sp->dp->do_on_unfreeze |= DELAY_DP_INT;
+            } else {
+                cp0_update_count();
+                add_interrupt_event(DP_INT, 4000);
+            }
+        }
+        sp_delay_time = 1000;
 
         protect_framebuffers(sp->dp);
     }
     else if (sp->mem[0xfc0/4] == 2)
     {
-       /* Audio List */
+        //audio.processAList();
         sp->regs2[SP_PC_REG] &= 0xfff;
+#if defined(PROFILE)
         timed_section_start(TIMED_SECTION_AUDIO);
-        if (send_allist_to_hle_rsp == 0)
-           rsp.doRspCycles(0xffffffff);
-        else
-           hleDoRspCycles(0xffffffff);
+#endif
+        rsp.doRspCycles(0xffffffff);
+#if defined(PROFILE)
         timed_section_end(TIMED_SECTION_AUDIO);
+#endif
         sp->regs2[SP_PC_REG] |= save_pc;
+
+        sp_delay_time = 4000;
     }
     else
     {
@@ -321,20 +321,39 @@ void do_SP_Task(struct rsp_core* sp)
         sp->regs2[SP_PC_REG] &= 0xfff;
         rsp.doRspCycles(0xffffffff);
         sp->regs2[SP_PC_REG] |= save_pc;
+
+        sp_delay_time = 0;
     }
 
     sp->rsp_task_locked = 0;
-     if ((sp->regs[SP_STATUS_REG] & (SP_STATUS_HALT | SP_STATUS_BROKE)) == 0)
-     {
-        cp0_update_count();
-
-	sp->rsp_task_locked = 1;
-	add_interrupt_event(SP_INT, 1000);
+    // sp->mi->r4300->cp0.interrupt_unsafe_state &= ~INTR_UNSAFE_RSP;
+    if ((sp->regs[SP_STATUS_REG] & (SP_STATUS_HALT | SP_STATUS_BROKE)) == 0)
+    {
+        sp->rsp_task_locked = 1;
+        // sp->mi->r4300->cp0.interrupt_unsafe_state |= INTR_UNSAFE_RSP;
+        sp->r4300->mi.regs[MI_INTR_REG] |= MI_INTR_SP;
     }
+    if (sp->r4300->mi.regs[MI_INTR_REG] & MI_INTR_SP)
+    {
+        cp0_update_count();
+        add_interrupt_event(SP_INT, sp_delay_time);
+        sp->r4300->mi.regs[MI_INTR_REG] &= ~MI_INTR_SP;
+    }
+
+    sp->regs[SP_STATUS_REG] &=
+        ~(SP_STATUS_TASKDONE | SP_STATUS_BROKE | SP_STATUS_HALT);
 }
 
 void rsp_interrupt_event(struct rsp_core* sp)
 {
-   if ((sp->regs[SP_STATUS_REG] & SP_STATUS_INTR_BREAK) != 0)
-      raise_rcp_interrupt(sp->r4300, MI_INTR_SP);
+    if (!sp->rsp_task_locked)
+    {
+        sp->regs[SP_STATUS_REG] |=
+            SP_STATUS_TASKDONE | SP_STATUS_BROKE | SP_STATUS_HALT;
+    }
+
+    if ((sp->regs[SP_STATUS_REG] & SP_STATUS_INTR_BREAK) != 0)
+    {
+        raise_rcp_interrupt(sp->r4300, MI_INTR_SP);
+    }
 }

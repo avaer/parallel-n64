@@ -181,6 +181,7 @@ void add_interrupt_event_count(int type, unsigned int count)
    if (get_event(type))
    {
       DebugMessage(M64MSG_WARNING, "two events of type 0x%x in interrupt queue", type);
+      return;
    }
 
    event = alloc_node(&q.pool);
